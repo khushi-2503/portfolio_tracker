@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Tracker</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+            --background-gradient: linear-gradient(135deg, #3498db, #8e44ad);
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            margin: 0;
+            padding-top: 80px; 
+        }
+        header {
+            background: var(--background-gradient);
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        nav {
+            background: var(--secondary-color);
+            padding: 0.75rem;
+            position: sticky;
+            top: 80px;
+            z-index: 1000;
+        }
+
+        nav a {
+            color: white;
+            margin: 0 1rem;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            color: var(--primary-color);
+        }
+        .container {
+            margin-top: 1rem;
+        }
+        .table {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .table thead th {
+            background: var(--dark-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        .table tbody tr:hover {
+            background: var(--light-color);
+        }
+        .form-container {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .form-control {
+            border-radius: 25px;
+            padding: 0.75rem 1rem;
+            border: 1px solid #ddd;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+        .btn {
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-danger {
+            background: var(--accent-color);
+            border: none;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+        footer {
+            background: var(--secondary-color);
+            color: white;
+            text-align: center;
+            padding: 1.5rem 0;
+            margin-top: 4rem;
+            box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        footer p {
+            margin: 0;
+            font-size: 0.9rem;
+        }
+        .insights-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .insights-card h3 {
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+        }
+
+        .insights-card p {
+            margin: 0.5rem 0;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Portfolio Tracker</h1>
+        <p>Track your investments with ease and precision.</p>
+    </header>
+    <nav>
+        <div class="container">
+            <a href="#portfolio">Portfolio</a>
+            <a href="#insights">Insights</a>
+            <a href="#add-stock">Add Stock</a>
+        </div>
+    </nav>
+    <div class="container">
+        <section class="mb-4">
+            <h2 class="mb-3">Filter Stocks</h2>
+            <div class="input-group">
+                <input type="text" class="form-control" id="filter-sector" placeholder="Enter sector" />
+                <button class="btn btn-secondary" onclick="filterStocks()">Filter</button>
+            </div>
+        </section>
+        <section id="portfolio" class="mb-5">
+            <h2 class="mb-4">Portfolio</h2>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Ticker</th>
+                            <th>Quantity</th>
+                            <th>Buy Price</th>
+                            <th>Current Price</th>
+                            <th>Sector</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="portfolio-table">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        <section class="mb-5">
+            <div class="d-flex gap-3">
+                <button class="btn btn-primary" onclick="fetchPortfolio()">Refresh Portfolio</button>
+                <button class="btn btn-success" onclick="generateRandomStocks()">Generate Random Stocks</button>
+                <button class="btn btn-warning" onclick="exportCSV()">Export as CSV</button>
+            </div>
+        </section>
+        <section id="insights" class="mb-5">
+            <h2 class="mb-4">Portfolio Insights</h2>
+            <div class="insights-card">
+                <p><strong>Best Stock:</strong> <span id="best-stock" class="text-success"></span></p>
+                <p><strong>Worst Stock:</strong> <span id="worst-stock" class="text-danger"></span></p>
+                <p><strong>Total Value:</strong> $<span id="total-value"></span></p>
+                <p><strong>Total Profit/Loss:</strong> $<span id="total-profit-loss"></span></p>
+            </div>
+        </section>
+        <section id="add-stock" class="mb-5">
+            <h2 class="mb-4">Add/Edit Stock</h2>
+            <div class="form-container">
+                <form id="stock-form" onsubmit="addOrEditStock(event)">
+                    <input type="hidden" id="stock-id" />
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Stock Name</label>
+                            <input type="text" class="form-control" id="name" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ticker" class="form-label">Ticker</label>
+                            <input type="text" class="form-control" id="ticker" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="quantity" class="form-label">Quantity</label>
+                            <input type="number" class="form-control" id="quantity" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="buy-price" class="form-label">Buy Price</label>
+                            <input type="number" class="form-control" id="buy-price" required />
+                        </div>
+                        <div class="col-md-12">
+                            <label for="sector" class="form-label">Sector</label>
+                            <input type="text" class="form-control" id="sector" />
+                        </div>
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+
+
+    <footer>
+        <p>&copy; 2025 Portfolio Tracker. All rights reserved.</p>
+    </footer>
+
+    <script>
+        async function fetchPortfolio() {
+            try {
+                const response = await axios.get('/api/portfolio');
+                const portfolio = response.data;
+
+                const table = document.getElementById('portfolio-table');
+                table.innerHTML = '';
+                portfolio.forEach(stock => {
+                    const row = `<tr>
+                        <td>${stock.id}</td>
+                        <td>${stock.name}</td>
+                        <td>${stock.ticker}</td>
+                        <td>${stock.quantity}</td>
+                        <td>${stock.buy_price}</td>
+                        <td>${stock.current_price || 'N/A'}</td>
+                        <td>${stock.sector}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="editStock(${stock.id})">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteStock(${stock.id})">Delete</button>
+                        </td>
+                    </tr>`;
+                    table.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Error fetching portfolio:', error);
+            }
+        }
+
+        async function fetchInsights() {
+            try {
+                const response = await axios.get('/api/portfolio_insights');
+                const insights = response.data;
+
+                document.getElementById('best-stock').textContent = `${insights.best_stock.name} (${insights.best_stock.ticker}) - ${insights.best_stock.profit_or_loss}`;
+                document.getElementById('worst-stock').textContent = `${insights.worst_stock.name} (${insights.worst_stock.ticker}) - ${insights.worst_stock.profit_or_loss}`;
+                document.getElementById('total-value').textContent = insights.total_value.toFixed(2);
+                document.getElementById('total-profit-loss').textContent = insights.total_profit_loss.toFixed(2);
+            } catch (error) {
+                console.error('Error fetching insights:', error);
+            }
+        }
+
+        async function addOrEditStock(event) {
+            event.preventDefault();
+
+            const stockId = document.getElementById('stock-id').value;
+            const name = document.getElementById('name').value;
+            const ticker = document.getElementById('ticker').value;
+            const quantity = document.getElementById('quantity').value;
+            const buyPrice = document.getElementById('buy-price').value;
+            const sector = document.getElementById('sector').value;
+
+            try {
+                if (stockId) {
+                    await axios.put(`/api/edit_stock/${stockId}`, { name, ticker, quantity, buy_price: buyPrice, sector });
+                } else {
+                    await axios.post('/api/add_stock', { name, ticker, quantity, buy_price: buyPrice, sector });
+                }
+
+                fetchPortfolio();
+                fetchInsights();
+                document.getElementById('stock-form').reset();
+            } catch (error) {
+                console.error('Error adding/editing stock:', error);
+            }
+        }
+
+        async function editStock(stockId) {
+            try {
+                const response = await axios.get(`/api/get_stock/${stockId}`);
+                const stock = response.data;
+
+                document.getElementById('stock-id').value = stock.id;
+                document.getElementById('name').value = stock.name;
+                document.getElementById('ticker').value = stock.ticker;
+                document.getElementById('quantity').value = stock.quantity;
+                document.getElementById('buy-price').value = stock.buy_price;
+                document.getElementById('sector').value = stock.sector;
+            } catch (error) {
+                console.error('Error fetching stock details:', error);
+            }
+        }
+
+        async function deleteStock(stockId) {
+            try {
+                await axios.delete(`/api/delete_stock/${stockId}`);
+                fetchPortfolio();
+                fetchInsights();
+            } catch (error) {
+                console.error('Error deleting stock:', error);
+            }
+        }
+
+        async function generateRandomStocks() {
+            try {
+                await axios.post('/api/generate_random_stocks');
+                fetchPortfolio();
+                fetchInsights();
+            } catch (error) {
+                console.error('Error generating random stocks:', error);
+            }
+        }
+
+        function exportCSV() {
+            window.location.href = '/api/export_portfolio';
+        }
+
+        async function filterStocks() {
+            const sector = document.getElementById('filter-sector').value;
+            try {
+                const response = await axios.get(`/api/filter_stocks?sector=${sector}`);
+                const stocks = response.data.stocks;
+
+                const table = document.getElementById('portfolio-table');
+                table.innerHTML = '';
+                stocks.forEach(stock => {
+                    const row = `<tr>
+                        <td>${stock.id}</td>
+                        <td>${stock.name}</td>
+                        <td>${stock.ticker}</td>
+                        <td>${stock.quantity}</td>
+                        <td>${stock.buy_price}</td>
+                        <td>${stock.current_price || 'N/A'}</td>
+                        <td>${stock.sector}</td>
+                        <td>
+                            <button class="btn btn-warning btn-sm" onclick="editStock(${stock.id})">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteStock(${stock.id})">Delete</button>
+                        </td>
+                    </tr>`;
+                    table.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Error filtering stocks:', error);
+            }
+        }
+
+        fetchPortfolio();
+        fetchInsights();
+    </script>
+</body>
+</html>
